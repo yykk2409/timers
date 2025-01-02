@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
+    <audio src="./timeup.mp3" id="timeup" hidden></audio>
+    <title>共テタイマー</title>
+    <style>
+        body {
+            position: relative;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+        }
+        h3{
+            margin:0;
+        }
+        .setting-container{
+            height:100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container{
+            display: flex; 
+            height:auto;
+            align-items: flex-end;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .input-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .question-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .remove-btn {
+            cursor: pointer;
+            font-size: 24px;
+            color: white;
+            transition: color 0.2s;
+        }
+
+        .remove-btn:hover {
+            color: red;
+        }
+
+
+        .question-input input {
+            width: 80px;
+            height: 80px;
+            text-align: center;
+            font-size: 30px;
+            border: 2px solid white;
+            border-radius: 10px;
+            background: black;
+            color: white;
+            outline: none;
+        }
+
+        #addQuestionBtn {
+            width: 86.71px;
+            height: 85.63px;
+            text-align: center;
+            font-size: 30px;
+            border: 2px dashed white;
+            border-radius: 10px;
+            background: black;
+            color: white;
+        }
+
+        .add-button{
+            font-size: 50px;
+        }
+
+        #addQuestionBtn:hover {
+            background: white;
+            color: black;
+        }
+
+        #timers {
+            display: none;
+            margin-top: 5%;
+            justify-content: space-between;
+            width: 100%;
+            height: 350px;
+        }
+
+        .timer {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 50%;
+            height: 100%;
+            text-align: center;
+            font-size: 30px;
+            gap:10px;
+        }
+
+        .timer span {
+            font-size: 80px;
+        }
+        .timer .time-limit{
+            font-size: 40px;
+            color: #bbb;
+        }
+
+        .button-section button {
+            background: black;
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            width:185.22px;
+            height :85.63px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: white;
+            color: black;
+        }
+
+        .stock-section {
+            display: flex;
+            position: absolute;
+            flex-direction: column;
+            margin-top: 20px;
+            width: 80%;
+            text-align: left;
+            bottom:10px;
+        }
+
+        .stock-list {
+            display: flex;
+            width:100%;
+            gap: 10px;
+        }
+
+        .stock-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            width: 100%;
+            font-size: 24px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .stock-item .question-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #bbb;
+        }
+
+        .stock-item .time-display {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .stock-item .time-limit {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #bbb;
+        }
+        #contorol_button{
+            display:none;
+            position:absolute;
+            top:0;
+            right:0;
+            font-size:100px;
+            cursor:pointer;
+            z-index:1;
+        }
+        .circular-timer {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            top:0;
+            z-index: -1;
+        }
+        .circular-timer svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring {
+            display: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%; /* 円形にする */
+            background: conic-gradient(transparent, transparent 98%, black);
+            position: relative;
+        }
+        .ring::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 28px; /* 中心部分の大きさ */
+            height: 28px;
+            background: black; /* 中心の背景色 */
+            border-radius: 50%; /* 中心を円形に */
+        }
+    </style>
+</head>
+
+<body>
+    <span class="material-symbols-outlined contorol_button" id="contorol_button">pause_circle</span>
+    <div class="setting-container" id="setting-container">
+        <div class="container" id="container">
+            <div class="input-section" id="inputSection">
+                <div class="question-input">
+                    <div style="display: flex; width: 100%;  align-items: center; justify-content: space-between;"><label>大問1</label></div>
+                    <input type="number" id="question1" min="0" placeholder="分">
+                </div>
+            </div>
+            <button id="addQuestionBtn"><span class="material-symbols-outlined add-button">add</span></button>
+        </div>
+        <div class="button-section" id="button-section">
+            <button id="startBtn">スタート</button>
+        </div>
+    </div>
+    <div class="timers" id="timers" style="display: none;">
+        <div class="timer">
+            <h3>全体</h3>
+            <span id="mainTimer">60:00</span>
+            <span class="time-limit" id="main-time-limit"></span>
+            <div class="circular-timer">
+              <svg viewBox="0 0 36 36">
+                <circle id="mainCircle-background" cx="18" cy="18" r="16" fill="none" stroke="black" stroke-width="4"/>
+                <circle id="mainCircle" cx="18" cy="18" r="16" fill="none" stroke="white" stroke-width="4" 
+                        stroke-dasharray="100, 100" stroke-dashoffset="0"/>
+                <foreignObject x="0" y="0" width="36" height="36">
+                    <div class="ring" id="mainCircle-ring"></div>
+                </foreignObject>
+              </svg>
+            </div>
+          </div>
+      
+          <!-- 大問の残り時間 -->
+          <div class="timer">
+            <h3 id="timer-title">大問1</h3>
+            <span id="questionTimer">10:00</span>
+            <span class="time-limit" id="question-time-limit"></span>
+            <div class="circular-timer">
+              <svg viewBox="0 0 36 36">
+                <circle id="questionCircle-background" cx="18" cy="18" r="16" fill="none" stroke="black" stroke-width="4"/>
+                <circle id="questionCircle" cx="18" cy="18" r="16" fill="none" stroke="white" stroke-width="4" 
+                        stroke-dasharray="100, 100" stroke-dashoffset="0"/>
+                <foreignObject x="0" y="0" width="36" height="36">
+                    <div class="ring" id="questionCircle-ring"></div>
+                </foreignObject>
+                
+              </svg>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="stock-section" id="stockSection" style="display: none;">
+        <h4>所要時間</h4>
+        <div id="stockList" class="stock-list"></div>
+    </div>    
+    <script>
+        let questionCount = 1;
+        let questionTimers = [];
+        let currentQuestion = 0;
+        let totalTime = 0;
+        let initializetotalTime = 0;
+        let mainTimerInterval;
+        let questionTimerInterval;
+
+        document.getElementById('addQuestionBtn').addEventListener('click', () => {
+            if(questionCount < 10){
+                const inputSection = document.getElementById('inputSection');
+                const lastQuestion = inputSection.lastElementChild;
+
+                // 既存の最後の大問の削除ボタンを消す
+                if (lastQuestion) {
+                    const removeBtn = lastQuestion.querySelector('.remove-btn');
+                    if (removeBtn) removeBtn.remove();
+                }
+
+                // 新しい大問を追加
+                questionCount++;
+                const newQuestion = document.createElement('div');
+                newQuestion.classList.add('question-input');
+                newQuestion.innerHTML = `
+                    <div style="display: flex; width: 100%; align-items: center; justify-content: space-between;">
+                        <label>大問${questionCount}</label>
+                        <span class="material-symbols-outlined remove-btn">remove</span>
+                    </div>
+                    <input type="number" min="0" placeholder="分" id="question${questionCount}">
+                `;
+                inputSection.appendChild(newQuestion);
+
+                
+                if(questionCount == 10){
+                    document.getElementById("addQuestionBtn").hidden = true
+                    document.getElementById("startBtn").style.width = (questionCount-1)*10 + 86.71*questionCount+'px'
+                }else{
+                    document.getElementById("startBtn").style.width = questionCount*10 + 86.71*(questionCount+1)+'px'
+                }
+
+                // 削除ボタンのイベントリスナーを追加
+                const removeBtn = newQuestion.querySelector('.remove-btn');
+                removeBtn.addEventListener('click', () => handleRemoveQuestion(newQuestion));
+            }
+        });
+
+        function handleRemoveQuestion(questionElement) {
+            const inputSection = document.getElementById('inputSection');
+            inputSection.removeChild(questionElement);
+            questionCount--;
+            document.getElementById("addQuestionBtn").hidden = false
+            document.getElementById("startBtn").style.width = questionCount*10 + 86.71*(questionCount+1)+'px'
+
+            // 大問が2個以上の場合、最後の大問に削除ボタンを追加
+            const remainingQuestions = inputSection.children;
+            if (remainingQuestions.length >= 2) {
+                const last = remainingQuestions[remainingQuestions.length - 1];
+                if (!last.querySelector('.remove-btn')) {
+                    const newRemoveSpan = document.createElement('span');
+                    newRemoveSpan.classList.add('material-symbols-outlined', 'remove-btn');
+                    newRemoveSpan.textContent = 'remove';
+                    newRemoveSpan.addEventListener('click', () => handleRemoveQuestion(last));
+                    last.firstElementChild.appendChild(newRemoveSpan);
+                }
+            }
+        }
+
+        // スタートボタン
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.question-input input[type="number"]');
+            let allFilled = true;
+
+            inputs.forEach(input => {
+                if (input.value.trim() === '' || isNaN(input.value) || Number(input.value) <= 0) {
+                    input.style.border = '2px solid red'; // 赤枠を適用
+                    allFilled = false;
+                } else {
+                    input.style.border = '2px solid white'; // 白枠に戻す
+                }
+            });
+
+            if (!allFilled) {
+                alert('すべての大問の時間を入力してください');
+                return;
+            }else{
+                document.getElementById('setting-container').style.display = 'none';
+                document.getElementById('container').style.display = 'none';
+                document.getElementById('button-section').style.display = 'none';
+                document.getElementById('timers').style.display = 'flex';
+                document.getElementById('stockSection').style.display = 'flex';
+                document.getElementById('contorol_button').style.display = 'block'
+                // 入力値を収集
+                questionTimers = [];
+                for (let i = 1; i <= questionCount; i++) {
+                    const time = document.getElementById(`question${i}`).value;
+                    questionTimers.push(time * 60); // 秒に変換
+                }
+                initialTimers = []
+                for (let i = 1; i <= questionCount; i++) {
+                    const time = document.getElementById(`question${i}`).value;
+                    initialTimers.push(time * 60); // 秒に変換
+                }
+                initializetotalTime = questionTimers.reduce((acc, cur) => acc + cur, 0);
+                totalTime = questionTimers.reduce((acc, cur) => acc + cur, 0);
+                document.getElementById('mainTimer').textContent = formatTime(totalTime)
+                document.getElementById('main-time-limit').textContent = `/${formatTime(totalTime)}`
+                document.getElementById('questionTimer').textContent = formatTime(initialTimers[0])
+                document.getElementById('question-time-limit').textContent = `/${formatTime(initialTimers[0])}`
+                initializeStockList(questionCount)
+                startMainTimer();
+                currentQuestion = 0;
+                startQuestionTimer();
+            }
+        });
+
+        document.getElementById('contorol_button').addEventListener("click",()=>{
+            if(document.getElementById('contorol_button').textContent == "pause_circle"){
+                clearInterval(mainTimerInterval);
+                clearInterval(questionTimerInterval);
+                document.getElementById('contorol_button').textContent = "play_circle"
+            }else if(document.getElementById('contorol_button').textContent == "play_circle"){
+                document.getElementById('contorol_button').textContent = "pause_circle"
+                const mainTimerElement = document.getElementById('mainTimer');
+                if (currentQuestion < questionTimers.length){
+                    startMainTimer();
+                    startQuestionTimer();
+                }
+            }else{
+                currentQuestion = 0;
+                totalElapsedTime = 0
+                document.getElementById("timer-title").innerText = `大問1`
+                questionTimers = [];
+                for (let i = 1; i <= questionCount; i++) {
+                    const time = document.getElementById(`question${i}`).value;
+                    questionTimers.push(time * 60); // 秒に変換
+                }
+                initializeStockList(questionCount)
+                totalTime = initializetotalTime;
+                document.getElementById('mainTimer').textContent = formatTime(totalTime)
+                document.getElementById('main-time-limit').textContent = `/${formatTime(totalTime)}`
+                document.getElementById('questionTimer').textContent = formatTime(initialTimers[0])
+                document.getElementById('question-time-limit').textContent = `/${formatTime(initialTimers[0])}`
+                updateTimer(mainCircle,totalTime,initializetotalTime)
+                updateTimer(questionCircle,initialTimers[0],initialTimers[0])
+                startMainTimer();
+                startQuestionTimer();
+
+                // ボタンの表示をリセット
+                document.getElementById('contorol_button').textContent = "pause_circle";
+            }
+        })
+
+        // 全体タイマー
+        function startMainTimer() {
+            const mainTimerElement = document.getElementById('mainTimer');
+            clearInterval(mainTimerInterval);
+            mainTimerInterval = setInterval(() => {
+                totalTime -= 0.01;
+                
+                updateTimer(mainCircle,totalTime,initializetotalTime)
+                if(totalTime == 0){
+                    document.getElementById("timeup").play()
+                }
+                if(totalTime <= 0){
+                    mainTimerElement.textContent = formatTime(Math.floor(Math.abs(totalTime)));
+                    mainTimerElement.style.color = "red"
+                }else {
+                    mainTimerElement.textContent = formatTime(Math.ceil(Math.abs(totalTime)));
+                    mainTimerElement.style.color = "white"
+                }
+            }, 10);
+        }
+
+        // 大問タイマー
+        function startQuestionTimer() {
+            const questionTimerElement = document.getElementById('questionTimer');
+            clearInterval(questionTimerInterval);
+            questionTimerInterval = setInterval(() => {
+                if (currentQuestion < questionTimers.length) {
+                    questionTimers[currentQuestion] -= 0.01;
+                    updateTimer(questionCircle,questionTimers[currentQuestion],initialTimers[currentQuestion])
+                    if(questionTimers[currentQuestion] <= 0){
+                        questionTimerElement.textContent = formatTime(Math.floor(Math.abs(questionTimers[currentQuestion])));
+                        questionTimerElement.style.color = "red"
+                    }else{
+                        questionTimerElement.textContent = formatTime(Math.ceil(Math.abs(questionTimers[currentQuestion])));
+                        questionTimerElement.style.color = "white"
+                    }
+                } else {
+                    clearInterval(questionTimerInterval);
+                }
+            }, 10);
+        }
+
+        const mainCircle = document.getElementById('mainCircle');
+        const questionCircle = document.getElementById('questionCircle');
+
+        function updateTimer(circle, timeRemaining, totalTime) {
+            const ring = document.getElementById(`${circle.id}-ring`);
+            if (timeRemaining >= 0) {
+                // 残り時間が正の時の処理（通常の進行）
+                const percentage = (timeRemaining / totalTime) * 100;
+                circle.style.strokeDasharray = `${percentage}, 100`;
+                circle.style.stroke = "white"; // 通常色
+                circle.style.display = 'inline'
+                ring.style.display = 'none'
+                document.getElementById(`${circle.id}-background`).style.stroke = "black";
+            } else if(Math.abs(timeRemaining) <= totalTime){
+                // 残り時間が負の時の処理（逆方向の進行）
+                const overtime = Math.abs(timeRemaining); // 経過した超過時間
+                const percentage = 100 - (overtime / totalTime) * 100;
+                circle.style.strokeDasharray = `${percentage}, 100`;
+                circle.style.stroke = "black"; // 通常色
+                circle.style.display = 'inline'
+                ring.style.display = 'none'
+                document.getElementById(`${circle.id}-background`).style.stroke = "red"; // 超過色
+            } else{
+                // 残り時間が負の時の処理（逆方向の進行）
+                const overtime = Math.abs(timeRemaining)%totalTime; // 経過した超過時間
+                const rotation = 450-(overtime / totalTime) * 360;
+                ring.style.display = 'block'
+                //circle.style.strokeDasharray = `${percentage}, 100`;
+                ring.style.transform = `rotate(${rotation}deg)`
+                circle.style.display = "none"
+                document.getElementById(`${circle.id}-background`).style.stroke = "red"; // 超過色
+            }
+        }
+
+
+        const stockSection = document.getElementById('stockSection');
+        const stockList = document.getElementById('stockList');
+
+        // 大問枠を生成する関数
+        function initializeStockList(questionCount) {
+            stockList.innerHTML = ''; // 初期化
+            for (let i = 0; i < questionCount; i++) {
+                const stockItem = document.createElement('div');
+                stockItem.classList.add('stock-item');
+                stockItem.setAttribute('id', `stock-item-${i}`);
+                stockItem.innerHTML = `
+                    <span class="question-label">大問${i + 1}</span>
+                    <span class="time-display"></span>
+                    <span class="time-limit">/${formatTime(initialTimers[i])}</span>
+                `;
+                stockList.appendChild(stockItem);
+            }
+            const stockItem = document.createElement('div');
+            stockItem.classList.add('stock-item');
+            stockItem.setAttribute('id', `stock-item-all`);
+            stockItem.innerHTML = `
+                <span class="question-label">全体</span>
+                <span class="time-display"></span>
+                <span class="time-limit">/${formatTime(initializetotalTime)}</span>
+            `;
+            stockList.appendChild(stockItem);
+            stockSection.style.display = 'block'; // セクションを表示
+        }
+        let totalElapsedTime = 0;
+        // ストック記録
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                // 所要時間の計算
+                const elapsed = initialTimers[currentQuestion] - Math.ceil(questionTimers[currentQuestion]);
+                const formattedTime = formatTime(elapsed);
+
+                // 該当の大問枠に所要時間を表示
+                const stockItem = document.getElementById(`stock-item-${currentQuestion}`);
+                if (stockItem) {
+                    const timeDisplay = stockItem.querySelector('.time-display');
+                    if (timeDisplay) timeDisplay.textContent = formattedTime;
+                }
+                if(currentQuestion < questionTimers.length){
+                    totalElapsedTime += elapsed;
+                    currentQuestion++;
+                }
+                if(currentQuestion == questionTimers.length){
+                    const formattedTime = formatTime(totalElapsedTime);
+                    // 該当の大問枠に所要時間を表示
+                    const stockItem = document.getElementById("stock-item-all");
+                    if (stockItem) {
+                        const timeDisplay = stockItem.querySelector('.time-display');
+                        if (timeDisplay) timeDisplay.textContent = formattedTime;
+                    }
+                    document.getElementById("contorol_button").textContent = "replay"
+                    clearInterval(mainTimerInterval)
+                    clearInterval(questionTimerInterval)
+                }
+                if(currentQuestion < questionTimers.length){
+                    document.getElementById("timer-title").innerText = `大問${currentQuestion+1}`
+                    document.getElementById('questionTimer').textContent = formatTime(initialTimers[currentQuestion])
+                    document.getElementById('question-time-limit').textContent = `/${formatTime(initialTimers[currentQuestion])}`
+                }
+            }
+        });
+
+        // 時間フォーマット関数
+        function formatTime(seconds) {
+            const mins = Math.floor(Math.abs(seconds) / 60);
+            const secs = Math.abs(seconds) % 60;
+            const sign = seconds < 0 ? '-' : '';
+            return `${sign}${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+    </script>
+</body>
+
+</html>
