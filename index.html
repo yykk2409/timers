@@ -236,6 +236,53 @@
             background: black; /* 中心の背景色 */
             border-radius: 50%; /* 中心を円形に */
         }
+        @media screen and (max-width: 850px) {
+            #contorol_button{
+                display:none;
+                position:absolute;
+                top:0;
+                right:0;
+                font-size:80px;
+                cursor:pointer;
+                z-index:1;
+            }
+            #timers {
+                display: none;
+                justify-content: center;
+                margin-top: 0;
+                width: 100%;
+                height: 100vh;
+            }
+            .circular-timer svg {
+                margin-top: 6%;
+            }
+            .timer {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width: 50%;
+                height: 100%;
+                text-align: center;
+                font-size: 30px;
+                gap:10px;
+            }
+            body{
+                height:100vh;
+                justify-content: flex-start;
+                overflow-x: auto;
+                overflow-y: auto;
+            }
+            .stock-section {
+                position:static;
+                display: flex;
+                flex-direction: column;
+                margin-top: 0;
+                width: 80%;
+                text-align: left;
+            }
+        }
     </style>
 </head>
 
@@ -303,6 +350,7 @@
         let initializetotalTime = 0;
         let mainTimerInterval;
         let questionTimerInterval;
+        let timeupFlag = false
 
         document.getElementById('addQuestionBtn').addEventListener('click', () => {
             if(questionCount < 10){
@@ -385,7 +433,11 @@
                 document.getElementById('container').style.display = 'none';
                 document.getElementById('button-section').style.display = 'none';
                 document.getElementById('timers').style.display = 'flex';
-                document.getElementById('stockSection').style.display = 'flex';
+                if(!isMobile()){
+                    document.getElementById('stockSection').style.display = 'flex';
+                }else{
+                    document.body.style.height = '200vh';
+                }
                 document.getElementById('contorol_button').style.display = 'block'
                 // 入力値を収集
                 questionTimers = [];
@@ -456,7 +508,8 @@
                 totalTime -= 0.01;
                 
                 updateTimer(mainCircle,totalTime,initializetotalTime)
-                if(totalTime == 0){
+                if(totalTime <= 0 && !timeupFlag){
+                    timeupFlag = true
                     document.getElementById("timeup").play()
                 }
                 if(totalTime <= 0){
@@ -598,6 +651,78 @@
             const sign = seconds < 0 ? '-' : '';
             return `${sign}${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
+
+        if(isMobile()){
+            // スワイプでページ切り替え
+
+            
+            let startY = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+            });
+
+            document.addEventListener('touchend', (e) => {
+                let endY = e.changedTouches[0].clientY;
+                if (startY - endY > 50) {
+                    window.scrollTo({ top: window.innerHeight, behavior: "smooth" }); // 縦スクロール
+                } else if (startY - endY > 0) {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (endY - startY > 50) {
+                    window.scrollTo({ top: 0, behavior: "smooth" }); // 縦スクロール
+                } else if (endY - startY > 0) {
+                    window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+                }else {
+                    console.log(4)
+                }
+            });
+        }
+        function isMobile() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isUserAgentMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+
+            // 縦横比が1.5以上、または画面幅が768px以下の場合をスマホとみなす
+            const aspectRatio = window.innerHeight / window.innerWidth;
+            const isResponsiveMobile = aspectRatio > 1.5 || window.innerWidth <= 768;
+            // ユーザーエージェントかレスポンシブ条件のどちらかが成立すればスマホ
+            return isUserAgentMobile || isResponsiveMobile;
+        }
+
+        if (isMobile()) {
+            console.log("スマホでアクセスされています！");
+        } else {
+            console.log("デスクトップでアクセスされています！");
+        }
+
+            // 画面サイズ変更時にもチェック
+        window.addEventListener("resize", () => {
+            if (isMobile()) {
+                let startY = 0;
+
+                document.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                });
+
+                document.addEventListener('touchend', (e) => {
+                    let endY = e.changedTouches[0].clientY;
+                    if (startY - endY > 50) {
+                        window.scrollTo({ top: window.innerHeight, behavior: "smooth" }); // 縦スクロール
+                    } else if (startY - endY > 0) {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                    } else if (endY - startY > 50) {
+                        window.scrollTo({ top: 0, behavior: "smooth" }); // 縦スクロール
+                    } else if (endY - startY > 0) {
+                        window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+                    }else {
+                        console.log(4)
+                    }
+                });
+                console.log("スマホモードに切り替わりました！");
+            } else {
+                console.log("デスクトップモードに切り替わりました！");
+            }
+        });
+
 
     </script>
 </body>
