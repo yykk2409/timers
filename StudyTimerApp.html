@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study-Break Timer</title>
+  <style>
+    body {
+		 position:relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #76c7c0;
+      overflow: hidden;
+    }
+
+    canvas {
+		  position:absolute;
+      display: block;
+    }
+
+    canvas#confetti {
+      z-index:-10;
+    }
+
+    #timer-container{
+      position:relative;
+      width:100%;
+      height:100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container{
+      position:relative;
+      width:50%;
+      height:100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #timer {
+      display:none;
+      border-radius: 100%;
+      box-shadow: 0px 0px 30px rgb(0, 0, 0);
+    }
+
+    .center-text {
+      position: absolute;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 200px;
+      height: 200px;
+      pointer-events: none;
+      text-align: center;
+		  z-index:1;
+    }
+
+    .phase {
+      font-size: 200px;
+      font-weight: bold;
+      margin: 0;
+      color: #000000;
+      z-index: 1;
+    }
+
+    .timer {
+      font-size: 100px;
+      font-weight: bold;
+      margin: 0;
+      color: #000000;
+    }
+
+    #progress-container {
+      position: absolute;
+		  bottom:0;
+      width: 100%;
+      height: 50px;
+      background-color: #e0e0e0;
+
+      overflow: hidden;
+      box-shadow: 0px 0px 30px rgb(0, 0, 0);
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background-color: #76c7c0;
+      transition: width 0.1s linear;
+    }
+
+    #progress-label {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      color: #000000;
+    }
+
+	  button{
+		  width:500px;
+		  height:500px;
+		  z-index:1;
+		  background-color: #76c7c0;
+		  border-radius: 100%;
+		  border-color: black;
+		  border-width: 4px;
+		  font-size: 100px;
+      font-weight: bold;
+		  transform: translate(76%);
+		  box-shadow: 0px 0px 30px rgb(0, 0, 0);
+		}
+  </style>
+</head>
+<body>
+	<button id="start_btn">START</button>
+  <div id="timer-container">
+    <div class="container"><p class="phase" id="phase-text" hidden>STUDY</p></div>
+    <div class="container">
+      <div class="center-text" id="center-text">
+        <p class="timer" id="timer-text">50:00</p>
+      </div>
+      <canvas id="timer" width="500" height="500"></canvas>
+    </div>
+  </div>
+  <canvas id="confetti"></canvas>
+
+  <div id="progress-container">
+    <div id="progress-bar"></div>
+    <div id="progress-label">0:00</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("timer");
+    const ctx = canvas.getContext("2d");
+    const phaseText = document.getElementById("phase-text");
+    const timerText = document.getElementById("timer-text");
+    const progressBar = document.getElementById("progress-bar");
+    const progressLabel = document.getElementById("progress-label");
+
+    const confettiCanvas = document.getElementById("confetti");
+    const confettiCtx = confettiCanvas.getContext("2d");
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    const studyTime = 50 * 60; // 50分
+    const breakTime = 10 * 60; // 10分
+    const totalStudyDay = 12 * 60 * 60; // 24時間 (累積の最大値)
+    let totalStudyTime = 0; // 累積勉強時間
+    let totalTime = studyTime;
+    let remainingTime = totalTime;
+    let isStudyPhase = true;
+    let isPaused = false;
+
+    const radius = canvas.width / 2;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    let confettiParticles = [];
+
+    // 円形タイマーを描画
+    function drawCircle(progress) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 背景円
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius-1, 0, 2 * Math.PI);
+      ctx.fillStyle = "#e0e0e0";
+      ctx.fill();
+
+      // 扇形
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + 2 * Math.PI * progress;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius-1, startAngle, endAngle, false);
+      ctx.closePath();
+      ctx.fillStyle = isStudyPhase ? "#76c7c0" : "#f76c5e";
+      ctx.fill();
+
+      // 円の枠
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius-1, 0, 2 * Math.PI);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "black";
+      ctx.stroke();
+    }
+
+    // タイマーの残り時間をフォーマット
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    // 累積時間をフォーマット
+    function formatCumulativeTime(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      return `${hours}:${String(mins).padStart(2, "0")}`;
+    }
+
+    // 累積勉強時間ゲージの更新
+    function updateProgressBar() {
+      const progress = Math.min(totalStudyTime / totalStudyDay, 1);
+      progressBar.style.width = `${progress * 100}%`;
+      progressLabel.textContent = formatCumulativeTime(totalStudyTime);
+    }
+
+    // 紙吹雪エフェクト
+    function createConfetti() {
+      for (let i = 0; i < 150; i++) {
+        confettiParticles.push({
+          x: Math.random() * confettiCanvas.width,
+          y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+          w: Math.random() * 10 + 5,
+          h: Math.random() * 10 + 5,
+          dx: Math.random() * 4 - 2,
+          dy: Math.random() * 5 + 10,
+          color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+        });
+      }
+    }
+
+    function drawConfetti() {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      confettiParticles = confettiParticles.filter((p) => {
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(p.x, p.y, p.w, p.h);
+        p.x += p.dx;
+        p.y += p.dy;
+
+        return p.y <= confettiCanvas.height;
+      });
+    }
+
+    function animateConfetti() {
+      drawConfetti();
+      if (confettiParticles.length > 0) {
+        requestAnimationFrame(animateConfetti);
+      }
+    }
+
+	 let AudioFlag = false
+
+    // タイマーの更新
+    function updateTimer() {
+      if (!isPaused) {
+        if (remainingTime > 0) {
+          remainingTime -= 0.01;
+          if (isStudyPhase) {
+            totalStudyTime += 0.01;
+            updateProgressBar();
+          }
+
+			if(remainingTime < 4 && !AudioFlag){
+				playSoundsSequentially(soundList);
+				AudioFlag = true
+			}
+      
+      if(remainingTime > 4 && AudioFlag){
+				AudioFlag = false
+			}
+        } else {
+          isStudyPhase = !isStudyPhase;
+          totalTime = isStudyPhase ? studyTime : breakTime;
+          remainingTime = totalTime;
+
+          if (!isStudyPhase) {
+            createConfetti();
+            animateConfetti();
+          }
+        }
+
+        const progress = remainingTime / totalTime;
+        drawCircle(progress);
+        phaseText.textContent = isStudyPhase ? "STUDY" : "BREAK";
+        document.body.style.backgroundColor = isStudyPhase ? "#76c7c0" : "#f76c5e";
+        timerText.textContent = formatTime(Math.floor(remainingTime));
+      }
+    }
+
+	  function playSoundsSequentially(soundList, index = 0) {
+		  if (index >= soundList.length) return;
+
+		  const { frequency, duration } = soundList[index];
+		  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		  const oscillator = audioCtx.createOscillator();
+		  const gainNode = audioCtx.createGain();
+
+		  oscillator.type = "sine"; // 正弦波
+		  oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+		  gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+		  oscillator.connect(gainNode);
+		  gainNode.connect(audioCtx.destination);
+
+		  oscillator.start();
+		  setTimeout(() => {
+			  oscillator.stop();
+			  audioCtx.close();
+		  }, duration);
+
+		  setTimeout(() => {
+			  playSoundsSequentially(soundList, index + 1);
+		  }, 1000);
+	  }
+
+	  // 再生する音のリスト（1秒おきに再生）
+	  const soundList = [
+		  { frequency: 442, duration: 300 },
+		  { frequency: 442, duration: 300 },
+		  { frequency: 442, duration: 300 },
+		  { frequency: 884, duration: 2000 }
+	  ];
+
+    // タイマーの一時停止
+    canvas.addEventListener("click", () => {
+      isPaused = !isPaused;
+    });
+
+	  document.addEventListener('keydown',(event)=>{
+			if(event.code == "Space"){
+				event.preventDefault();
+				isPaused = !isPaused;
+			}
+	  })
+
+	  document.getElementById("start_btn").addEventListener("click" ,()=>{
+      document.getElementById("center-text").style.display = "flex"
+      document.getElementById("timer-container").style.display = "flex"
+      document.getElementById("timer").style.display = "block"
+      document.getElementById("phase-text").hidden = false
+      document.getElementById("start_btn").hidden = true
+			// タイマーの初期化
+		    drawCircle(1);
+		    updateProgressBar();
+		    setInterval(updateTimer, 10);
+	  })
+
+    function resizeCanvas() {
+        const canvas = document.getElementById("confetti");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    // 初回リサイズ
+    resizeCanvas();
+
+    // ウィンドウのリサイズ時にキャンバスを調整
+    window.addEventListener("resize", resizeCanvas);
+	  
+    
+  </script>
+</body>
+</html>
